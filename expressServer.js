@@ -1,6 +1,7 @@
 import express from "express";
 import nodemon from "nodemon";
 import { readFile, writeFile } from "node:fs/promises";
+import { nextTick } from "node:process";
 
 
 // set up dependencies
@@ -34,7 +35,52 @@ server.get("/pets/:index", (req,res) => {
     });
 });
 
-server.get("/pets/:index")
+server.use(express.json());
+  
+// For parsing serverlication/x-www-form-urlencoded
+server.use(express.urlencoded({ extended: true }));
+  
+server.post('/pets', function (req, res) {
+//     let body = "";
+  const pet = req.body;
+  const { age, kind, name } = pet;
+  const requiredFields = ["age", "kind", "name"];
+const errors = [];
+
+for (let field of requiredFields) {
+    if (pet[field] === undefined) {
+        errors.push(`Missing pet '${field}'`)
+    }
+}
+
+if (pet.age && typeof pet.age !== 'number') {
+    errors.push("Pet age must be a number.")
+}
+
+if (errors.length > 0) {
+    res.status(422);
+    res.send(errors.join(" "));
+} else {
+  
+  readFile("./pets.json", "utf-8")
+    .then((text) => {
+
+        const pets = JSON.parse(text);
+        pets.push(pet);
+        return writeFile("./pets.json", pets)
+    
+        })
+        .then(() => {
+            res.json(pet)
+            res.status(201)
+        })
+        .catch((error) => {
+            next(error);
+        })
+    }
+});
+
+///server.get("/pets/:index")
 // server.use((err, req, res, next) => {
 //     res.status(404)
 // })

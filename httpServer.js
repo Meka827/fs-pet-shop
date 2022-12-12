@@ -10,6 +10,7 @@ const server = http.createServer((req, res) => {
     if(method === 'POST' && url === '/pets') {
         let body = '';
         req.on('data', (chunk) => {
+            console.log(typeof chunk);
             body += chunk;
         });
         req.on('end', () => {
